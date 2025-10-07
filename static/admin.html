@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Administration Panel | Secure E-Voting System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .glass-dark {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .log-box {
+            font-family: 'Courier New', monospace;
+            background: #0f172a;
+            color: #10b981;
+        }
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes pulse-glow {
+            from { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+            to { box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); }
+        }
+        .config-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .config-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Login Modal -->
+    <div id="loginModal" class="login-overlay">
+        <div class="glass rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4 border-4 border-orange-200">
+            <div class="text-center mb-6">
+                <div class="inline-block p-4 bg-gradient-to-br from-red-600 to-orange-500 rounded-2xl mb-4 pulse-glow">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">Election Administrator Login</h2>
+                <p class="text-gray-200">Enter credentials to access election controls</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Username</label>
+                    <input type="text" id="loginUsername" value="admin" class="w-full px-4 py-3 bg-gray-700 border-2 border-gray-600 rounded-xl text-white focus:border-orange-500 focus:ring-4 focus:ring-orange-200 outline-none transition-all text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-200 mb-2">Password</label>
+                    <input type="password" id="loginPassword" value="password123" class="w-full px-4 py-3 bg-gray-700 border-2 border-gray-600 rounded-xl text-white focus:border-orange-500 focus:ring-4 focus:ring-orange-200 outline-none transition-all text-lg">
+                </div>
+                <button id="loginButton" class="w-full py-4 bg-gradient-to-r from-red-600 to-orange-500 text-white font-bold rounded-xl shadow-2xl hover:shadow-3xl transition-all hover:scale-105 text-lg pulse-glow">
+                    🔐 Authenticate & Enter Admin Panel
+                </button>
+                <div class="text-center mt-4">
+                    <p class="text-sm text-gray-400">Default: admin / password123</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="glass-dark shadow-2xl sticky top-0 z-50 hidden" id="navBar">
+        <div class="container mx-auto max-w-7xl px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-red-600 to-orange-500 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Election Control Center</h1>
+                    <p class="text-sm text-gray-300">Administrator Panel</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div class="px-4 py-2 bg-green-500 bg-opacity-20 text-green-400 rounded-lg border border-green-500 font-semibold flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    Authenticated
+                </div>
+                <button id="logoutButton" class="px-4 py-2 bg-red-500 bg-opacity-20 text-red-400 rounded-lg border border-red-500 font-semibold hover:bg-red-600 transition-all flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto max-w-7xl px-6 py-8 hidden" id="mainContent">
+        <!-- Dashboard Header -->
+        <div class="glass rounded-3xl shadow-2xl p-8 mb-8">
+            <div class="flex flex-col lg:flex-row items-center justify-between">
+                <div class="text-center lg:text-left mb-6 lg:mb-0">
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">Election Administration</h1>
+                    <p class="text-gray-600 text-lg">Monitor and control the election process</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="/results" class="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Live Results
+                    </a>
+                    <a href="/" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Voting Booth
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <!-- Left Column: Controls & Configuration -->
+            <div class="xl:col-span-2 space-y-8">
+                <!-- Quick Actions -->
+                <div class="glass rounded-3xl shadow-2xl p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <svg class="w-7 h-7 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Election Control Actions
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button id="closeButton" class="w-full bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold py-6 px-6 rounded-xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 text-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                Close Voting & Tally Results
+                            </button>
+                            <button id="resetButton" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold py-6 px-6 rounded-xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 text-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                Reset Election
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Election Configuration -->
+                <div class="glass rounded-3xl shadow-2xl p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <svg class="w-7 h-7 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Election Configuration
+                    </h3>
+                    
+                    <!-- Election Settings -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="config-card bg-white p-6 rounded-2xl border-2 border-gray-200 shadow-lg">
+                            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Election Details
+                            </h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Election Title</label>
+                                    <input type="text" id="electionTitle" value="Presidential Election 2024" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Election Type</label>
+                                    <select id="electionType" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none transition-all">
+                                        <option value="presidential">Presidential</option>
+                                        <option value="parliamentary">Parliamentary</option>
+                                        <option value="local">Local Government</option>
+                                        <option value="referendum">Referendum</option>
+                                        <option value="primary">Primary Election</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Election Date</label>
+                                    <input type="date" id="electionDate" value="2024-11-05" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none transition-all">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-card bg-white p-6 rounded-2xl border-2 border-gray-200 shadow-lg">
+                            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+                                </svg>
+                                Voting Settings
+                            </h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Max Votes Per Voter</label>
+                                    <input type="number" id="maxVotes" value="1" min="1" max="10" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Voting Hours</label>
+                                    <div class="flex space-x-2">
+                                        <input type="time" id="votingStart" value="07:00" class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none transition-all">
+                                        <span class="self-center text-gray-500">to</span>
+                                        <input type="time" id="votingEnd" value="19:00" class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 outline-none transition-all">
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="allowWriteIns" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                                    <label for="allowWriteIns" class="ml-2 text-sm font-semibold text-gray-700">Allow Write-in Candidates</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Candidate Management -->
+                    <div class="config-card bg-white p-6 rounded-2xl border-2 border-gray-200 shadow-lg mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-lg font-bold text-gray-800 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                                Candidate Management
+                            </h4>
+                            <button id="addCandidateBtn" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                Add Candidate
+                            </button>
+                        </div>
+                        <div id="candidatesList" class="space-y-4">
+                            <!-- Candidate cards will be dynamically added here -->
+                            <div class="text-center py-8 text-gray-500" id="noCandidatesMessage">
+                                No candidates configured. Click "Add Candidate" to get started.
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="saveConfigBtn" class="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold text-lg rounded-xl shadow-2xl hover:shadow-3xl transition-all hover:scale-105">
+                        <span class="flex items-center justify-center">
+                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Save Election Configuration
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Process Log -->
+                <div class="glass-dark rounded-3xl shadow-2xl p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold text-white flex items-center">
+                            <svg class="w-7 h-7 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            System Process Log
+                        </h3>
+                        <button id="clearLogButton" class="px-4 py-2 bg-gray-600 text-gray-200 rounded-lg hover:bg-gray-500 transition-all text-sm font-semibold">
+                            Clear Log
+                        </button>
+                    </div>
+                    <div id="processLog" class="log-box h-64 p-5 rounded-xl overflow-y-auto text-sm shadow-inner">
+                        <div class="text-blue-400">[SYSTEM] Election administration panel initialized</div>
+                        <div class="text-gray-400">[SYSTEM] Waiting for authentication...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Information & Tools -->
+            <div class="space-y-8">
+                <!-- Election Statistics -->
+                <div class="glass rounded-3xl shadow-2xl p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <svg class="w-7 h-7 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Real-time Election Statistics
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-200">
+                            <div class="text-2xl font-bold text-blue-600" id="totalRegistered">0</div>
+                            <div class="text-sm text-blue-700 font-semibold">Registered Voters</div>
+                        </div>
+                        <div class="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200">
+                            <div class="text-2xl font-bold text-green-600" id="totalVotes">0</div>
+                            <div class="text-sm text-green-700 font-semibold">Votes Cast</div>
+                        </div>
+                        <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
+                            <div class="text-2xl font-bold text-purple-600" id="votePercentage">0%</div>
+                            <div class="text-sm text-purple-700 font-semibold">Participation</div>
+                        </div>
+                        <div class="text-center p-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl border-2 border-orange-200">
+                            <div class="text-2xl font-bold text-orange-600" id="electionStatus">Open</div>
+                            <div class="text-sm text-orange-700 font-semibold">Status</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Health -->
+                <div class="glass rounded-3xl shadow-2xl p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <svg class="w-7 h-7 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        System Health
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                            <span class="font-semibold text-green-700">Voting Server</span>
+                            <span class="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-bold">Online</span>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                            <span class="font-semibold text-green-700">Database</span>
+                            <span class="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-bold">Healthy</span>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                            <span class="font-semibold text-green-700">Encryption</span>
+                            <span class="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-bold">Active</span>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
+                            <span class="font-semibold text-blue-700">WebSocket</span>
+                            <span class="px-3 py-1 bg-blue-500 text-white rounded-full text-sm font-bold">Connected</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="glass rounded-3xl shadow-2xl p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <svg class="w-7 h-7 mr-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        Recent Activity
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="p-3 bg-gray-50 rounded-lg">
+                            <div class="text-sm font-semibold text-gray-700">System Startup</div>
+                            <div class="text-xs text-gray-500">Election server initialized successfully</div>
+                        </div>
+                        <div class="p-3 bg-gray-50 rounded-lg">
+                            <div class="text-sm font-semibold text-gray-700">Admin Login</div>
+                            <div class="text-xs text-gray-500">Administrator authenticated to control panel</div>
+                        </div>
+                        <div class="p-3 bg-gray-50 rounded-lg">
+                            <div class="text-sm font-semibold text-gray-700">Configuration</div>
+                            <div class="text-xs text-gray-500">Election settings loaded</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Information -->
+                <div class="glass rounded-3xl shadow-2xl p-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Administrator Info
+                    </h3>
+                    <div class="space-y-3 text-gray-600">
+                        <p><strong class="text-gray-800">Username:</strong> admin</p>
+                        <p><strong class="text-gray-800">Role:</strong> Chief Election Officer</p>
+                        <p><strong class="text-gray-800">Session:</strong> <span id="sessionTime">0m</span></p>
+                        <p class="text-sm text-gray-500 italic mt-4">⚠️ Authorized use only. All actions are logged and audited.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = window.location.origin;
+        const loginModal = document.getElementById('loginModal');
+        const navBar = document.getElementById('navBar');
+        const mainContent = document.getElementById('mainContent');
+        const processLog = document.getElementById('processLog');
+        const closeButton = document.getElementById('closeButton');
+        const resetButton = document.getElementById('resetButton');
+        const loginButton = document.getElementById('loginButton');
+        const logoutButton = document.getElementById('logoutButton');
+        const clearLogButton = document.getElementById('clearLogButton');
+        const loginUsername = document.getElementById('loginUsername');
+        const loginPassword = document.getElementById('loginPassword');
+        
+        // Configuration elements
+        const saveConfigBtn = document.getElementById('saveConfigBtn');
+        const addCandidateBtn = document.getElementById('addCandidateBtn');
+        const candidatesList = document.getElementById('candidatesList');
+        const noCandidatesMessage = document.getElementById('noCandidatesMessage');
+        
+        // Stats elements
+        const totalRegistered = document.getElementById('totalRegistered');
+        const totalVotes = document.getElementById('totalVotes');
+        const votePercentage = document.getElementById('votePercentage');
+        const electionStatus = document.getElementById('electionStatus');
+        const sessionTime = document.getElementById('sessionTime');
+
+        let authHeader = null;
+        let sessionStart = null;
+        let sessionTimer = null;
+        let candidateCounter = 0;
+
+        // Default candidates
+        const defaultCandidates = [
+            { id: 1, name: "Sarah Chen", party: "Progressive Alliance", color: "from-blue-500 to-indigo-600", experience: "Former Governor", slogan: "Building Tomorrow, Together" },
+            { id: 2, name: "Marcus Rodriguez", party: "Unity Coalition", color: "from-green-500 to-emerald-600", experience: "Senator", slogan: "Strength Through Unity" },
+            { id: 3, name: "Dr. Amelia Watson", party: "Innovation Party", color: "from-purple-500 to-pink-600", experience: "Technology Entrepreneur", slogan: "Future-Ready Leadership" }
+        ];
+
+        function getAuthHeader(username, password) {
+            return 'Basic ' + btoa(username + ':' + password);
+        }
+
+        function logToProcess(message, type = 'info') {
+            const colors = {
+                info: 'text-blue-400',
+                success: 'text-green-400',
+                error: 'text-red-400',
+                warning: 'text-yellow-400',
+                system: 'text-purple-400'
+            };
+            const prefixes = {
+                info: '[INFO]',
+                success: '[SUCCESS]',
+                error: '[ERROR]',
+                warning: '[WARNING]',
+                system: '[SYSTEM]'
+            };
+            const timestamp = new Date().toLocaleTimeString();
+            processLog.innerHTML += `<div class="${colors[type]}">${prefixes[type]} [${timestamp}] ${message}</div>`;
+            processLog.scrollTop = processLog.scrollHeight;
+        }
+
+        function updateSessionTimer() {
+            if (sessionStart) {
+                const now = new Date();
+                const diff = Math.floor((now - sessionStart) / 1000 / 60);
+                sessionTime.textContent = `${diff}m`;
+            }
+        }
+
+        async function updateElectionStats() {
+            try {
+                const response = await fetch(`${API_URL}/election/status`);
+                if (response.ok) {
+                    const data = await response.json();
+                    totalRegistered.textContent = data.total_registered;
+                    totalVotes.textContent = data.total_votes_cast;
+                    
+                    const percentage = data.total_registered > 0 ? 
+                        Math.round((data.total_votes_cast / data.total_registered) * 100) : 0;
+                    votePercentage.textContent = `${percentage}%`;
+                    
+                    electionStatus.textContent = data.election_state === 'VOTING_OPEN' ? 'OPEN' : 'CLOSED';
+                    electionStatus.className = data.election_state === 'VOTING_OPEN' ? 
+                        'text-2xl font-bold text-green-600' : 'text-2xl font-bold text-red-600';
+                }
+            } catch (error) {
+                logToProcess(`Failed to fetch election stats: ${error.message}`, 'error');
+            }
+        }
+
+        function loadConfiguration() {
+            // Load configuration from localStorage or use defaults
+            const savedConfig = localStorage.getItem('electionConfig');
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig);
+                
+                // Set form values
+                document.getElementById('electionTitle').value = config.title || 'Presidential Election 2024';
+                document.getElementById('electionType').value = config.type || 'presidential';
+                document.getElementById('electionDate').value = config.date || '2024-11-05';
+                document.getElementById('maxVotes').value = config.maxVotes || 1;
+                document.getElementById('votingStart').value = config.votingStart || '07:00';
+                document.getElementById('votingEnd').value = config.votingEnd || '19:00';
+                document.getElementById('allowWriteIns').checked = config.allowWriteIns || false;
+                
+                // Load candidates
+                if (config.candidates && config.candidates.length > 0) {
+                    renderCandidates(config.candidates);
+                } else {
+                    renderCandidates(defaultCandidates);
+                }
+            } else {
+                // Use defaults
+                renderCandidates(defaultCandidates);
+            }
+        }
+
+        function renderCandidates(candidates) {
+            candidatesList.innerHTML = '';
+            candidateCounter = candidates.length;
+            
+            if (candidates.length === 0) {
+                noCandidatesMessage.style.display = 'block';
+                return;
+            }
+            
+            noCandidatesMessage.style.display = 'none';
+            
+            candidates.forEach(candidate => {
+                const candidateCard = document.createElement('div');
+                candidateCard.className = 'candidate-config-card bg-gray-50 p-4 rounded-xl border-2 border-gray-300';
+                candidateCard.innerHTML = `
+                    <div class="flex items-start justify-between mb-3">
+                        <h5 class="font-bold text-gray-800">Candidate #${candidate.id}</h5>
+                        <button class="remove-candidate text-red-500 hover:text-red-700 transition-colors" data-id="${candidate.id}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
+                            <input type="text" value="${candidate.name}" class="candidate-name w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition-all" data-field="name" data-id="${candidate.id}">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Political Party</label>
+                            <input type="text" value="${candidate.party}" class="candidate-party w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition-all" data-field="party" data-id="${candidate.id}">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Color Scheme</label>
+                            <select class="candidate-color w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition-all" data-field="color" data-id="${candidate.id}">
+                                <option value="from-blue-500 to-indigo-600" ${candidate.color === 'from-blue-500 to-indigo-600' ? 'selected' : ''}>Blue Theme</option>
+                                <option value="from-green-500 to-emerald-600" ${candidate.color === 'from-green-500 to-emerald-600' ? 'selected' : ''}>Green Theme</option>
+                                <option value="from-purple-500 to-pink-600" ${candidate.color === 'from-purple-500 to-pink-600' ? 'selected' : ''}>Purple Theme</option>
+                                <option value="from-red-500 to-orange-600" ${candidate.color === 'from-red-500 to-orange-600' ? 'selected' : ''}>Red Theme</option>
+                                <option value="from-yellow-500 to-amber-600" ${candidate.color === 'from-yellow-500 to-amber-600' ? 'selected' : ''}>Yellow Theme</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Experience</label>
+                            <input type="text" value="${candidate.experience}" class="candidate-experience w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition-all" data-field="experience" data-id="${candidate.id}">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Campaign Slogan</label>
+                            <input type="text" value="${candidate.slogan}" class="candidate-slogan w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 outline-none transition-all" data-field="slogan" data-id="${candidate.id}">
+                        </div>
+                    </div>
+                `;
+                candidatesList.appendChild(candidateCard);
+            });
+            
+            // Add event listeners to remove buttons
+            document.querySelectorAll('.remove-candidate').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    removeCandidate(id);
+                });
+            });
+            
+            // Add event listeners to input fields
+            document.querySelectorAll('.candidate-name, .candidate-party, .candidate-color, .candidate-experience, .candidate-slogan').forEach(input => {
+                input.addEventListener('change', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const field = this.getAttribute('data-field');
+                    const value = this.value;
+                    updateCandidateField(id, field, value);
+                });
+            });
+        }
+
+        function addCandidate() {
+            candidateCounter++;
+            const newCandidate = {
+                id: candidateCounter,
+                name: "New Candidate",
+                party: "Independent",
+                color: "from-gray-500 to-gray-600",
+                experience: "Candidate experience",
+                slogan: "Campaign slogan"
+            };
+            
+            const currentCandidates = getCurrentCandidates();
+            currentCandidates.push(newCandidate);
+            renderCandidates(currentCandidates);
+            logToProcess(`Added new candidate: ${newCandidate.name}`, 'info');
+        }
+
+        function removeCandidate(id) {
+            const currentCandidates = getCurrentCandidates();
+            const candidate = currentCandidates.find(c => c.id === id);
+            const updatedCandidates = currentCandidates.filter(c => c.id !== id);
+            renderCandidates(updatedCandidates);
+            logToProcess(`Removed candidate: ${candidate.name}`, 'warning');
+        }
+
+        function updateCandidateField(id, field, value) {
+            const currentCandidates = getCurrentCandidates();
+            const candidate = currentCandidates.find(c => c.id === id);
+            if (candidate) {
+                candidate[field] = value;
+                logToProcess(`Updated ${field} for ${candidate.name}`, 'info');
+            }
+        }
+
+        function getCurrentCandidates() {
+            const candidateCards = document.querySelectorAll('.candidate-config-card');
+            const candidates = [];
+            
+            candidateCards.forEach(card => {
+                const id = parseInt(card.querySelector('.remove-candidate').getAttribute('data-id'));
+                const name = card.querySelector('.candidate-name').value;
+                const party = card.querySelector('.candidate-party').value;
+                const color = card.querySelector('.candidate-color').value;
+                const experience = card.querySelector('.candidate-experience').value;
+                const slogan = card.querySelector('.candidate-slogan').value;
+                
+                candidates.push({
+                    id,
+                    name,
+                    party,
+                    color,
+                    experience,
+                    slogan
+                });
+            });
+            
+            return candidates;
+        }
+
+        function saveConfiguration() {
+            const config = {
+                title: document.getElementById('electionTitle').value,
+                type: document.getElementById('electionType').value,
+                date: document.getElementById('electionDate').value,
+                maxVotes: parseInt(document.getElementById('maxVotes').value),
+                votingStart: document.getElementById('votingStart').value,
+                votingEnd: document.getElementById('votingEnd').value,
+                allowWriteIns: document.getElementById('allowWriteIns').checked,
+                candidates: getCurrentCandidates(),
+                lastUpdated: new Date().toISOString()
+            };
+            
+            localStorage.setItem('electionConfig', JSON.stringify(config));
+            logToProcess('Election configuration saved successfully', 'success');
+            
+            // Show success message
+            const originalText = saveConfigBtn.innerHTML;
+            saveConfigBtn.innerHTML = '<svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Configuration Saved!';
+            saveConfigBtn.classList.remove('from-green-600', 'to-emerald-600');
+            saveConfigBtn.classList.add('from-blue-600', 'to-indigo-600');
+            
+            setTimeout(() => {
+                saveConfigBtn.innerHTML = originalText;
+                saveConfigBtn.classList.remove('from-blue-600', 'to-indigo-600');
+                saveConfigBtn.classList.add('from-green-600', 'to-emerald-600');
+            }, 2000);
+        }
+
+        async function testAdminLogin(username, password) {
+            try {
+                const testAuth = getAuthHeader(username, password);
+                const response = await fetch(`${API_URL}/election/status`, {
+                    method: 'GET',
+                    headers: { 'Authorization': testAuth }
+                });
+                
+                if (response.status === 401) {
+                    throw new Error('Invalid administrator credentials');
+                }
+                if (!response.ok) {
+                    throw new Error('Server error: ' + response.status);
+                }
+                
+                return true;
+            } catch (error) {
+                throw new Error('Authentication failed: ' + error.message);
+            }
+        }
+
+        async function handleLogin() {
+            const username = loginUsername.value.trim();
+            const password = loginPassword.value.trim();
+            
+            if (!username || !password) {
+                logToProcess("Please enter both username and password", "error");
+                return;
+            }
+
+            loginButton.disabled = true;
+            loginButton.textContent = "⏳ Authenticating...";
+
+            try {
+                await testAdminLogin(username, password);
+                
+                authHeader = getAuthHeader(username, password);
+                sessionStart = new Date();
+                sessionTimer = setInterval(updateSessionTimer, 60000);
+                
+                loginModal.classList.add('hidden');
+                navBar.classList.remove('hidden');
+                mainContent.classList.remove('hidden');
+                
+                logToProcess("Administrator authentication successful", "success");
+                logToProcess("Election control panel initialized", "system");
+                logToProcess("Loading election configuration...", "info");
+                
+                // Load configuration
+                loadConfiguration();
+                
+                updateElectionStats();
+                setInterval(updateElectionStats, 5000);
+                
+            } catch (error) {
+                logToProcess(error.message, "error");
+                loginButton.disabled = false;
+                loginButton.textContent = "🔐 Authenticate & Enter Admin Panel";
+            }
+        }
+
+        function handleLogout() {
+            authHeader = null;
+            sessionStart = null;
+            clearInterval(sessionTimer);
+            
+            navBar.classList.add('hidden');
+            mainContent.classList.add('hidden');
+            loginModal.classList.remove('hidden');
+            loginButton.disabled = false;
+            loginButton.textContent = "🔐 Authenticate & Enter Admin Panel";
+            
+            processLog.innerHTML = '<div class="text-blue-400">[SYSTEM] Election administration panel initialized</div><div class="text-gray-400">[SYSTEM] Waiting for authentication...</div>';
+        }
+
+        async function closeElection() {
+            if (!authHeader) {
+                logToProcess("Administrator authentication required", "error");
+                return;
+            }
+
+            if (!confirm("🔒 CONFIRM ELECTION CLOSURE\n\nThis action will:\n• Stop all voting immediately\n• Tally and announce final results\n• Broadcast results to all connected clients\n• Make results publicly available\n\nThis action cannot be undone.")) {
+                logToProcess("Election closure cancelled by administrator", "warning");
+                return;
+            }
+
+            closeButton.disabled = true;
+            closeButton.innerHTML = '<svg class="w-5 h-5 mr-2 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...';
+            
+            logToProcess("Initiating election closure procedure...", "warning");
+            
+            try {
+                const response = await fetch(`${API_URL}/election/close`, {
+                    method: 'POST',
+                    headers: { 'Authorization': authHeader }
+                });
+                const res = await response.json();
+                if (!response.ok) throw new Error(res.detail || 'Unknown error');
+                
+                logToProcess("✅ " + res.message, "success");
+                logToProcess("Election results have been tallied and broadcast to all connected clients", "success");
+                logToProcess("Voting is now officially closed", "system");
+                
+                updateElectionStats();
+                
+                setTimeout(() => {
+                    closeButton.disabled = false;
+                    closeButton.innerHTML = '<svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>Close Voting & Tally Results';
+                }, 3000);
+            } catch(e) {
+                logToProcess("❌ " + e.message, "error");
+                closeButton.disabled = false;
+                closeButton.innerHTML = '<svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>Close Voting & Tally Results';
+            }
+        }
+
+        async function resetElection() {
+            if (!authHeader) {
+                logToProcess("Administrator authentication required", "error");
+                return;
+            }
+
+            if (!confirm("🔄 CONFIRM ELECTION RESET\n\n⚠️  WARNING: This is a DESTRUCTIVE operation that will:\n• Delete ALL voter registration data\n• Clear ALL cast votes and ballots\n• Remove ALL voting receipts\n• Reset the election to initial state\n\nThis action is IRREVERSIBLE and should only be used for testing or new elections.")) {
+                logToProcess("Election reset cancelled by administrator", "warning");
+                return;
+            }
+
+            resetButton.disabled = true;
+            resetButton.innerHTML = '<svg class="w-5 h-5 mr-2 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Resetting...';
+            
+            logToProcess("Initiating election reset procedure...", "warning");
+            
+            try {
+                const response = await fetch(`${API_URL}/election/open`, {
+                    method: 'POST',
+                    headers: { 'Authorization': authHeader }
+                });
+                const res = await response.json();
+                if (!response.ok) throw new Error(res.detail || 'Unknown error');
+                
+                logToProcess("✅ " + res.message, "success");
+                logToProcess("All previous election data has been cleared", "success");
+                logToProcess("Election system reset and ready for new election", "system");
+                
+                updateElectionStats();
+                
+                setTimeout(() => {
+                    resetButton.disabled = false;
+                    resetButton.innerHTML = '<svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Reset Election';
+                }, 3000);
+            } catch(e) {
+                logToProcess("❌ " + e.message, "error");
+                resetButton.disabled = false;
+                resetButton.innerHTML = '<svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Reset Election';
+            }
+        }
+
+        // Event listeners
+        loginButton.addEventListener('click', handleLogin);
+        logoutButton.addEventListener('click', handleLogout);
+        closeButton.addEventListener('click', closeElection);
+        resetButton.addEventListener('click', resetElection);
+        clearLogButton.addEventListener('click', () => {
+            processLog.innerHTML = '<div class="text-purple-400">[SYSTEM] Process log cleared</div>';
+        });
+        addCandidateBtn.addEventListener('click', addCandidate);
+        saveConfigBtn.addEventListener('click', saveConfiguration);
+
+        // Allow Enter key to submit login form
+        loginPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+
+        loginUsername.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+
+        // Auto-focus on password field when username is filled
+        loginUsername.addEventListener('input', () => {
+            if (loginUsername.value.trim() && !loginPassword.value.trim()) {
+                loginPassword.focus();
+            }
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            logToProcess("Election administration panel loaded", "system");
+            updateSessionTimer();
+        });
+    </script>
+</body>
+</html>
